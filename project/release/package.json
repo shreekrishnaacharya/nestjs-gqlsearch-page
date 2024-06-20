@@ -1,12 +1,12 @@
 {
-    "name": "@sksharma72000/nestjs-search-page",
+    "name": "@sksharma72000/nestjs-gqlsearch-page",
     "version": "2.3.5",
-    "description": "@sksharma72000/nestjs-search-page is a nestjs typeorm framework for mysql. It consist of library and tools that will let you quickly handle sql related operation writing less code for you so you can focus on your business logic.",
+    "description": "@sksharma72000/nestjs-gqlsearch-page is a nestjs typeorm framework for mysql. It consist of library and tools that will let you quickly handle sql related operation writing less code for you so you can focus on your business logic.",
     "main": "./index.js",
     "module": "./index.js",
     "typings": "./index.d.ts",
     "keywords": [
-        "easy to use searchable",
+        "easy to use searchable for graphql projects",
         "easy pagination"
     ],
     "author": "Shree Krishna Acharya",
