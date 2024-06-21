@@ -72,12 +72,13 @@ export function findOptions<T>({
   const pageable: IPageable = page ? PageRequest.from(page) : undefined;
   let whereCondition = { and: [], or: [] } as TWhere;
   const sort: { [key: string]: string } = pageable.getSort()?.asKeyValue();
-  const { where: whereRaw, relations } = _getMetaQuery(
-    whereCondition,
-    customQuery,
-    queryDto
-  );
+  const {
+    where: whereRaw,
+    relations,
+    select,
+  } = _getMetaQuery(whereCondition, customQuery, queryDto, selectDto);
   return {
+    select,
     where: whereRaw as unknown as FindOptionsWhere<T>,
     order: sort as unknown as FindOptionsOrder<T>,
     relations: relations,
@@ -132,7 +133,6 @@ function _getMetaQuery(
   selectDto?: Object
 ): IBuildReturn {
   let relational = {};
-  let selection = {};
   for (const key in whereQuery) {
     const pageSearch: IPageSearch = Reflect.getMetadata(
       SK_PAGE_SEARCH,
@@ -188,7 +188,7 @@ function _getMetaQuery(
   return {
     where: [...whereArray],
     relations: { ...relational },
-    select: { ...selection },
+    select: { ...selectDto },
   };
 }
 
