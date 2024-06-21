@@ -1,11 +1,11 @@
-# sksharma72000\nestjs-glsearch-page
+# sksharma72000\nestjs-gqlsearch-page
 
 **Installation:**
 
 1. Install via Composer:
 
     ```bash
-   npm install @sksharma72000/nestjs-glsearch-page
+   npm install @sksharma72000/nestjs-gqlsearch-page
     ```
 
 **Features:**
@@ -23,6 +23,7 @@
    @PageSearch decorator accept IPageSearch interface object.
     ```
     interface IPageSearch {
+        is_relational?: boolean;
         column?: string;
         is_nested?: boolean;
         operation?: Operation;
@@ -30,6 +31,10 @@
         value?: string | number | boolean | null;
     }
     ```
+    *is_relational*: Indicate if the attribute is relational. By Default, if attribute value type is boolen, \
+                    then attribute is considered as relational unless it is set to false.\
+                    ie this will extract the relational table of current table with name of attribute and add to your response. Default value is null.\
+\
     *column*: Name of table's column where your want to query. Default value is the name of the attribute.\
 \
     *is_nested*: Indicate if current quering attribute is of relational table column. If the column name \
@@ -55,8 +60,8 @@
     interface IPage {
         _start: number;
         _end: number;
-        _sort: string[];
-        _order: SortDirection[];
+        _sort: string;
+        _order: SortDirection;
     }
     ```
     *_start*: Define from which row you want to the data list to start from. \
@@ -78,7 +83,7 @@
     It is the function that is responsible for quering into table with to enable pagination in your service. It takes IFindAllByPage interface as parameter. IFindAllByPage consist of repo, page, queryDto, customQuery where repo is your repositiry to perform query, page is IPage, queryDto is your dto and customQuery is where you can add custom where condition. It taked the Model class as its type. \
     Example :
     ```
-    findAllByPage<Comment>({ repo: this.commentRepository, page: pagable, queryDto: commentDto, searchDto: searchDto });
+    findAllByPage<Comment>({ repo: this.commentRepository, page: pagable, queryDto: commentDto });
     ```
 
 4. findOne\
@@ -98,7 +103,6 @@
     {
         where, #your where condition from dto
         order, #your order from IPage sort
-        select, #your selected colums
         relations, #your relation from dto,
         skip, #your skip from from IPage start
         take, #your take from from IPage end
@@ -112,7 +116,7 @@ This is how your CommentService looks like.
    Example : Your Entity
    ```bash
         import { Injectable } from '@nestjs/common';
-        import { findAllByPage, findOne, Page, IPage } from '@sksharma72000/nestjs-glsearch-page';
+        import { findAllByPage, findOne, Page, IPage } from '@sksharma72000/nestjs-gqlsearch-page';
         import { InjectRepository } from '@nestjs/typeorm';
         import { Repository } from "typeorm";
         import { Comment } from './entities/comment.entity';
@@ -143,7 +147,7 @@ This is how your CommentService looks like.
 \
 Following is how your CommentSearchDto looks like:
 ```bash
-        import { PageSearch } from '@sksharma72000/nestjs-glsearch-page'
+        import { PageSearch } from '@sksharma72000/nestjs-gqlsearch-page'
         import { Type } from 'class-transformer'
         import { IsOptional } from 'class-validator'
         export class CommentSearchDto {
@@ -224,11 +228,11 @@ Github:
 
 Want to explor the code for free.
 
-We appreciate your star and fork on github : https://github.com/shreekrishnaacharya/nestjs-glsearch-page
+We appreciate your star and fork on github : https://github.com/shreekrishnaacharya/nestjs-gqlsearch-page
 
 Contributing:
 
-We welcome contributions! Please see Contribution Guidelines: https://github.com/shreekrishnaacharya/nestjs-glsearch-page/CONTRIBUTING.md
+We welcome contributions! Please see Contribution Guidelines: https://github.com/shreekrishnaacharya/nestjs-gqlsearch-page/CONTRIBUTING.md
 
 License:
 

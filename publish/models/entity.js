@@ -13,20 +13,14 @@ exports.findOne = exports.findOptions = exports.findAllByPage = void 0;
 const typeorm_1 = require("typeorm");
 const constants_1 = require("../constants");
 const page_request_model_1 = require("./page-request.model");
-function findAllByPage({ repo, page, queryDto, customQuery }) {
-    var _a;
+function findAllByPage({ repo, page, queryDto, selectDto, customQuery, }) {
     return __awaiter(this, void 0, void 0, function* () {
-        const pageable = page_request_model_1.PageRequest.from(page);
-        let whereCondition = { and: [], or: [] };
-        const sort = (_a = pageable.getSort()) === null || _a === void 0 ? void 0 : _a.asKeyValue();
-        const { where: whereRaw, relations } = _getMetaQuery(whereCondition, customQuery, queryDto);
-        const options = {
-            where: whereRaw,
-            order: sort,
-            relations: relations,
-            skip: pageable.getSkip(),
-            take: pageable.getTake(),
-        };
+        const options = findOptions({
+            page,
+            queryDto,
+            selectDto,
+            customQuery,
+        });
         const result = yield repo.findAndCount(options);
         const elements = result[0];
         const totalElements = result[1];
@@ -34,16 +28,20 @@ function findAllByPage({ repo, page, queryDto, customQuery }) {
     });
 }
 exports.findAllByPage = findAllByPage;
-function findOptions({ page, queryDto, customQuery }) {
+function findOptions({ page, queryDto, selectDto, customQuery, }) {
     var _a;
-    if (page == undefined && queryDto == undefined && customQuery == undefined) {
-        throw new Error("One of page, or queryDto, or customQuery must be defined");
+    if (page == undefined &&
+        queryDto == undefined &&
+        customQuery == undefined &&
+        selectDto == undefined) {
+        throw new Error("One of page|queryDto|selectDto|customQuery must be defined");
     }
     const pageable = page ? page_request_model_1.PageRequest.from(page) : undefined;
     let whereCondition = { and: [], or: [] };
     const sort = (_a = pageable.getSort()) === null || _a === void 0 ? void 0 : _a.asKeyValue();
-    const { where: whereRaw, relations } = _getMetaQuery(whereCondition, customQuery, queryDto);
+    const { where: whereRaw, relations, select, } = _getMetaQuery(whereCondition, customQuery, queryDto, selectDto);
     return {
+        select,
         where: whereRaw,
         order: sort,
         relations: relations,
@@ -52,18 +50,23 @@ function findOptions({ page, queryDto, customQuery }) {
     };
 }
 exports.findOptions = findOptions;
-function findOne({ id, repo, queryDto, customQuery }) {
+function findOne({ id, repo, queryDto, selectDto, customQuery, }) {
     return __awaiter(this, void 0, void 0, function* () {
-        let whereCondition = { and: [], or: [] };
+        if (id == undefined &&
+            queryDto == undefined &&
+            customQuery == undefined &&
+            selectDto == undefined) {
+            throw new Error("One of id|queryDto|selectDto|customQuery must be defined");
+        }
         const cQ = customQuery !== null && customQuery !== void 0 ? customQuery : [];
         if (id) {
             cQ.push({ column: "id", value: id, operation: "eq", operator: "and" });
         }
-        const { where: whereRaw, relations } = _getMetaQuery(whereCondition, cQ, queryDto);
-        const options = {
-            where: whereRaw,
-            relations: relations,
-        };
+        const options = findOptions({
+            queryDto,
+            selectDto,
+            customQuery: cQ,
+        });
         return yield repo.findOne(options);
     });
 }
@@ -73,28 +76,29 @@ function _generatePageResult(elements, totalElements, pageable) {
         return {
             elements,
             totalElements,
-            pageable
+            pageable,
         };
     });
 }
-function _getMetaQuery(whereConditions, conditions, metaQuery) {
+function _getMetaQuery(whereConditions, conditions, whereQuery, selectDto) {
     var _a, _b;
     let relational = {};
-    for (const key in metaQuery) {
-        const pageSearch = Reflect.getMetadata(constants_1.PAGE_SEARCH, metaQuery, key);
+    for (const key in whereQuery) {
+        const pageSearch = Reflect.getMetadata(constants_1.SK_PAGE_SEARCH, whereQuery, key);
         if (pageSearch) {
             if ((_a = pageSearch.column) === null || _a === void 0 ? void 0 : _a.includes(".")) {
                 pageSearch.is_nested = (_b = pageSearch === null || pageSearch === void 0 ? void 0 : pageSearch.is_nested) !== null && _b !== void 0 ? _b : true;
             }
-            pageSearch.value = metaQuery[key];
-            if (((pageSearch.value === true || pageSearch.value === "true") && pageSearch.is_relational === null) || pageSearch.is_relational === true) {
-                relational = _buildRelation(relational, pageSearch);
-                continue;
-            }
+            pageSearch.value = whereQuery[key];
             if (pageSearch.value.toString() == "") {
                 continue;
             }
             _buildWhere(pageSearch, whereConditions);
+        }
+    }
+    for (const skey in selectDto) {
+        if (isObject(selectDto[skey])) {
+            relational[skey] = _buildRelation(selectDto[skey]);
         }
     }
     conditions === null || conditions === void 0 ? void 0 : conditions.forEach((pageSearch) => {
@@ -102,15 +106,10 @@ function _getMetaQuery(whereConditions, conditions, metaQuery) {
         if ((_a = pageSearch.column) === null || _a === void 0 ? void 0 : _a.includes(".")) {
             pageSearch.is_nested = (_b = pageSearch === null || pageSearch === void 0 ? void 0 : pageSearch.is_nested) !== null && _b !== void 0 ? _b : true;
         }
-        if ((pageSearch.value === true && pageSearch.is_relational !== false) || pageSearch.is_relational === true) {
-            relational = _buildRelation(relational, pageSearch);
-        }
-        else {
-            _buildWhere(pageSearch, whereConditions);
-        }
+        _buildWhere(pageSearch, whereConditions);
     });
     let whereArray = [];
-    whereConditions.or.forEach(element => {
+    whereConditions.or.forEach((element) => {
         whereArray.push(element);
     });
     if (whereArray.length == 0) {
@@ -127,9 +126,11 @@ function _getMetaQuery(whereConditions, conditions, metaQuery) {
             return Object.assign(Object.assign({}, element), andWhere);
         });
     }
-    return { where: [...whereArray], relations: Object.assign({}, relational) };
-}
-function _getWhereQuery() {
+    return {
+        where: [...whereArray],
+        relations: Object.assign({}, relational),
+        select: Object.assign({}, selectDto),
+    };
 }
 function _recursiveNestedObject(column, value) {
     if (column.length == 1) {
@@ -138,34 +139,6 @@ function _recursiveNestedObject(column, value) {
     }
     const [key, ...rest] = column;
     return { [key]: _recursiveNestedObject(rest, value) };
-}
-function _buildRelation(relational, pageSearch) {
-    const { column, is_nested } = pageSearch;
-    if (!column) {
-        return relational;
-    }
-    if (is_nested) {
-        const nested = _recursiveNestedObject(column.split("."), true);
-        relational = Object.assign(Object.assign({}, relational), nested);
-    }
-    else {
-        relational[column] = true;
-    }
-    return relational;
-}
-function _buildSelect(relational, pageSearch) {
-    const { column, is_nested } = pageSearch;
-    if (!column) {
-        return relational;
-    }
-    if (is_nested) {
-        const nested = _recursiveNestedObject(column.split("."), true);
-        relational = Object.assign(Object.assign({}, relational), nested);
-    }
-    else {
-        relational[column] = true;
-    }
-    return relational;
 }
 function _buildWhere(pageSearch, whereConditions) {
     let cond = {};
@@ -186,14 +159,24 @@ function _buildWhere(pageSearch, whereConditions) {
         return;
     }
     if (is_nested) {
-        const nested = column.split('.');
-        const nestValue = _switchContition(operation !== null && operation !== void 0 ? operation : 'like', value);
+        const nested = column.split(".");
+        const nestValue = _switchContition(operation !== null && operation !== void 0 ? operation : "like", value);
         cond = _recursiveNestedObject(nested, nestValue);
     }
     else {
-        cond[column] = _switchContition(operation !== null && operation !== void 0 ? operation : 'like', value);
+        cond[column] = _switchContition(operation !== null && operation !== void 0 ? operation : "like", value);
     }
-    whereConditions[operator !== null && operator !== void 0 ? operator : 'or'].push(cond);
+    whereConditions[operator !== null && operator !== void 0 ? operator : "or"].push(cond);
+}
+function _buildRelation(select, relation = {}) {
+    let isobject = false;
+    for (const skey in select) {
+        if (isObject(select[skey])) {
+            relation[skey] = _buildRelation(select[skey], relation);
+            isobject = true;
+        }
+    }
+    return isobject ? relation : true;
 }
 function _switchContition(operation, value) {
     switch (operation) {
@@ -216,4 +199,7 @@ function _switchContition(operation, value) {
         default:
             return value;
     }
+}
+function isObject(value) {
+    return value && typeof value === "object" && !Array.isArray(value);
 }
