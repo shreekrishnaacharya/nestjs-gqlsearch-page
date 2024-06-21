@@ -22,6 +22,9 @@ exports.GqlFields = (0, common_1.createParamDecorator)((data, ctx) => {
     const gqlCtx = graphql_1.GqlExecutionContext.create(ctx);
     const info = gqlCtx.getInfo();
     const node = info.fieldNodes[0];
+    if (data) {
+        return getNodeData(node[data]);
+    }
     return getNodeData(node);
 });
 const getNodeData = (node) => {

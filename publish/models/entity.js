@@ -40,6 +40,7 @@ function findOptions({ page, queryDto, selectDto, customQuery, }) {
     let whereCondition = { and: [], or: [] };
     const sort = (_a = pageable.getSort()) === null || _a === void 0 ? void 0 : _a.asKeyValue();
     const { where: whereRaw, relations, select, } = _getMetaQuery(whereCondition, customQuery, queryDto, selectDto);
+    select["id"] = true;
     return {
         select,
         where: whereRaw,
