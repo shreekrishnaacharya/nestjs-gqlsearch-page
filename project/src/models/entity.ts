@@ -77,6 +77,7 @@ export function findOptions<T>({
     relations,
     select,
   } = _getMetaQuery(whereCondition, customQuery, queryDto, selectDto);
+  select["id"] = true;
   return {
     select,
     where: whereRaw as unknown as FindOptionsWhere<T>,
