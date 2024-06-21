@@ -1,11 +1,11 @@
-# sksharma72000\nestjs-search-page
+# sksharma72000\nestjs-gqlsearch-page
 
 **Installation:**
 
 1. Install via Composer:
 
     ```bash
-   npm install @sksharma72000/nestjs-search-page
+   npm install @sksharma72000/nestjs-gqlsearch-page
     ```
 
 **Features:**
@@ -116,7 +116,7 @@ This is how your CommentService looks like.
    Example : Your Entity
    ```bash
         import { Injectable } from '@nestjs/common';
-        import { findAllByPage, findOne, Page, IPage } from '@sksharma72000/nestjs-search-page';
+        import { findAllByPage, findOne, Page, IPage } from '@sksharma72000/nestjs-gqlsearch-page';
         import { InjectRepository } from '@nestjs/typeorm';
         import { Repository } from "typeorm";
         import { Comment } from './entities/comment.entity';
@@ -147,7 +147,7 @@ This is how your CommentService looks like.
 \
 Following is how your CommentSearchDto looks like:
 ```bash
-        import { PageSearch } from '@sksharma72000/nestjs-search-page'
+        import { PageSearch } from '@sksharma72000/nestjs-gqlsearch-page'
         import { Type } from 'class-transformer'
         import { IsOptional } from 'class-validator'
         export class CommentSearchDto {
@@ -228,11 +228,11 @@ Github:
 
 Want to explor the code for free.
 
-We appreciate your star and fork on github : https://github.com/shreekrishnaacharya/nestjs-search-page
+We appreciate your star and fork on github : https://github.com/shreekrishnaacharya/nestjs-gqlsearch-page
 
 Contributing:
 
-We welcome contributions! Please see Contribution Guidelines: https://github.com/shreekrishnaacharya/nestjs-search-page/CONTRIBUTING.md
+We welcome contributions! Please see Contribution Guidelines: https://github.com/shreekrishnaacharya/nestjs-gqlsearch-page/CONTRIBUTING.md
 
 License:
 
