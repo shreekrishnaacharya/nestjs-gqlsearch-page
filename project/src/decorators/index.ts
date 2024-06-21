@@ -29,14 +29,17 @@ export function SelectColumn(options?: ISelectColumn) {
 }
 
 export const GqlFields = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
+  (data: string, ctx: ExecutionContext) => {
     const gqlCtx = GqlExecutionContext.create(ctx);
     const info: GraphQLResolveInfo = gqlCtx.getInfo();
     const node = info.fieldNodes[0];
+    const result = getNodeData(node);
     if (data) {
-      return getNodeData(node[data as string]);
+      if (data in result) {
+        return result[data];
+      }
     }
-    return getNodeData(node);
+    return result;
   }
 );
 

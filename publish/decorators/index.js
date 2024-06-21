@@ -22,10 +22,13 @@ exports.GqlFields = (0, common_1.createParamDecorator)((data, ctx) => {
     const gqlCtx = graphql_1.GqlExecutionContext.create(ctx);
     const info = gqlCtx.getInfo();
     const node = info.fieldNodes[0];
+    const result = getNodeData(node);
     if (data) {
-        return getNodeData(node[data]);
+        if (data in result) {
+            return result[data];
+        }
     }
-    return getNodeData(node);
+    return result;
 });
 const getNodeData = (node) => {
     const { selectionSet } = node || {};
