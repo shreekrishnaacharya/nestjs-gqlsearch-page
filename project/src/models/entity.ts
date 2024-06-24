@@ -56,6 +56,8 @@ export async function findAllByPage<T>({
 export function findOptions<T>({
   page,
   queryDto,
+  sort,
+  gqlPage,
   selectDto,
   customQuery,
 }: IFindOptionByPage): FindManyOptions {
@@ -69,9 +71,28 @@ export function findOptions<T>({
       "One of page|queryDto|selectDto|customQuery must be defined"
     );
   }
-  const pageable: IPageable = page ? PageRequest.from(page) : undefined;
+
+  let pageable = { skip: undefined, take: undefined };
   let whereCondition = { and: [], or: [] } as TWhere;
-  const sort: { [key: string]: string } = pageable.getSort()?.asKeyValue();
+  let sortRaw = undefined;
+  const pagabl = page ? PageRequest.from(page) : undefined;
+  if (sort) {
+    sortRaw = sort;
+  } else if (page) {
+    sortRaw = pagabl.getSort()?.asKeyValue();
+  }
+  if (gqlPage) {
+    pageable = {
+      skip: gqlPage.offset,
+      take: gqlPage.limit,
+    };
+  } else if (page) {
+    pageable = {
+      skip: pagabl?.getSkip(),
+      take: pagabl?.getTake(),
+    };
+  }
+
   const {
     where: whereRaw,
     relations,
@@ -81,10 +102,10 @@ export function findOptions<T>({
   return {
     select,
     where: whereRaw as unknown as FindOptionsWhere<T>,
-    order: sort as unknown as FindOptionsOrder<T>,
+    order: sortRaw,
     relations: relations,
-    skip: pageable?.getSkip(),
-    take: pageable?.getTake(),
+    skip: pageable.skip,
+    take: pageable.take,
   };
 }
 

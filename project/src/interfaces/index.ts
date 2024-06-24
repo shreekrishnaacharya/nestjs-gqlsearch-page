@@ -14,6 +14,15 @@ export interface ISelectColumn {
   is_relational?: boolean;
   is_nested?: boolean;
 }
+export interface IGqlSort {
+  field: number;
+  order: number;
+}
+
+export interface IGqlPage {
+  limit: number;
+  offset: number;
+}
 
 export interface IPage {
   _start: number;
@@ -36,6 +45,8 @@ export interface IFindAllByPage {
 
 export interface IFindOptionByPage {
   page?: IPage;
+  gqlPage?: IGqlPage;
+  sort?: [IGqlSort];
   queryDto?: Object;
   selectDto?: Object;
   customQuery?: IPageSearch[];
