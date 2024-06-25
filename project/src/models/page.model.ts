@@ -1,7 +1,7 @@
-import { IPage } from "../interfaces";
+import { IGqlPage, IPage } from "../interfaces";
 
 export class Page<T> {
-  public elements: T[];
-  public totalElements: number;
-  public pageable: IPage;
+  public nodes: T[];
+  public totalCount: number;
+  public pageable: IGqlPage;
 }

@@ -1,6 +1,6 @@
-import { IPage } from "../interfaces";
+import { IGqlPage } from "../interfaces";
 export declare class Page<T> {
-    elements: T[];
-    totalElements: number;
-    pageable: IPage;
+    nodes: T[];
+    totalCount: number;
+    pageable: IGqlPage;
 }

@@ -12,6 +12,18 @@ export interface ISelectColumn {
     is_relational?: boolean;
     is_nested?: boolean;
 }
+export interface ISortColumn {
+    column?: string;
+    value?: SortDirection;
+}
+export interface IGqlSort {
+    field: string;
+    direction: SortDirection;
+}
+export interface IGqlPage {
+    limit: number;
+    offset: number;
+}
 export interface IPage {
     _start: number;
     _end: number;
@@ -23,15 +35,17 @@ export interface ISortable {
         [key: string]: string;
     };
 }
-export interface IFindAllByPage {
-    repo: Repository<any>;
-    page: IPage;
+export interface IFindAllByPage<T> {
+    repo: Repository<T>;
+    gqlPage?: IGqlPage;
+    sort?: Array<IGqlSort>;
     queryDto?: Object;
     selectDto?: Object;
     customQuery?: IPageSearch[];
 }
 export interface IFindOptionByPage {
-    page?: IPage;
+    gqlPage?: IGqlPage;
+    sort?: Array<IGqlSort>;
     queryDto?: Object;
     selectDto?: Object;
     customQuery?: IPageSearch[];

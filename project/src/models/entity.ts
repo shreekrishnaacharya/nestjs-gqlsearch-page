@@ -19,12 +19,9 @@ import {
   IFindAllByPage,
   IFindOne,
   IFindOptionByPage,
-  IPage,
+  IGqlPage,
   IPageSearch,
-  IPageable,
-  ISelectColumn,
 } from "../interfaces";
-import { PageRequest } from "./page-request.model";
 
 type TWhere = { [key: string]: Array<any> };
 
@@ -36,25 +33,26 @@ interface IBuildReturn {
 
 export async function findAllByPage<T>({
   repo,
-  page,
   queryDto,
+  sort,
+  gqlPage,
   selectDto,
   customQuery,
-}: IFindAllByPage): Promise<Page<T>> {
+}: IFindAllByPage<T>): Promise<Page<T>> {
   const options: FindManyOptions<T> = findOptions<T>({
-    page,
     queryDto,
+    sort,
+    gqlPage,
     selectDto,
     customQuery,
   });
   const result = await repo.findAndCount(options);
-  const elements: T[] = result[0];
-  const totalElements: number = result[1];
-  return _generatePageResult<T>(elements, totalElements, page);
+  const nodes: T[] = result[0];
+  const totalCount: number = result[1];
+  return _generatePageResult<T>(nodes, totalCount, gqlPage);
 }
 
 export function findOptions<T>({
-  page,
   queryDto,
   sort,
   gqlPage,
@@ -62,34 +60,35 @@ export function findOptions<T>({
   customQuery,
 }: IFindOptionByPage): FindManyOptions {
   if (
-    page == undefined &&
+    gqlPage == undefined &&
     queryDto == undefined &&
     customQuery == undefined &&
     selectDto == undefined
   ) {
     throw new Error(
-      "One of page|queryDto|selectDto|customQuery must be defined"
+      "One of gqlPage|queryDto|selectDto|customQuery must be defined"
     );
   }
 
   let pageable = { skip: undefined, take: undefined };
   let whereCondition = { and: [], or: [] } as TWhere;
   let sortRaw = undefined;
-  const pagabl = page ? PageRequest.from(page) : undefined;
   if (sort) {
-    sortRaw = sort;
-  } else if (page) {
-    sortRaw = pagabl.getSort()?.asKeyValue();
+    sortRaw = {};
+    sort.forEach((e) => {
+      if (e.field.includes(".")) {
+        const list = e.field.split(".");
+        const key = list.shift();
+        sortRaw[key] = _gqlSort(list, e.direction);
+      } else {
+        sortRaw[e.field] = e.direction;
+      }
+    });
   }
   if (gqlPage) {
     pageable = {
       skip: gqlPage.offset,
       take: gqlPage.limit,
-    };
-  } else if (page) {
-    pageable = {
-      skip: pagabl?.getSkip(),
-      take: pagabl?.getTake(),
     };
   }
 
@@ -137,13 +136,13 @@ export async function findOne<T>({
 }
 
 async function _generatePageResult<T>(
-  elements: T[],
-  totalElements: number,
-  pageable: IPage
+  nodes: T[],
+  totalCount: number,
+  pageable: IGqlPage
 ): Promise<Page<T>> {
   return {
-    elements,
-    totalElements,
+    nodes,
+    totalCount,
     pageable,
   } as Page<T>;
 }
@@ -285,6 +284,17 @@ function _switchContition(operation: Operation, value: any) {
   }
 }
 
+function _gqlSort(sort: Array<string>, value: string) {
+  const key = sort.shift();
+  if (sort.length == 0) {
+    return {
+      [key]: value,
+    };
+  }
+  return {
+    [key]: _gqlSort(sort, value),
+  };
+}
 function isObject(value) {
   return value && typeof value === "object" && !Array.isArray(value);
 }

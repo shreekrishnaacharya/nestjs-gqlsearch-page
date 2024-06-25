@@ -1,5 +1,10 @@
-import { SK_IS_RELATIONAL, SK_IS_SELECT, SK_PAGE_SEARCH } from "../constants";
-import { IPageSearch, ISelectColumn } from "../interfaces";
+import {
+  SK_IS_RELATIONAL,
+  SK_IS_SELECT,
+  SK_IS_SORT,
+  SK_PAGE_SEARCH,
+} from "../constants";
+import { IPageSearch, ISelectColumn, ISortColumn } from "../interfaces";
 import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import { GraphQLResolveInfo } from "graphql";
@@ -25,6 +30,16 @@ export function SelectColumn(options?: ISelectColumn) {
       ...options,
     };
     Reflect.defineMetadata(SK_IS_SELECT, optionsList, target, propertyKey);
+  };
+}
+
+export function SortColumn(options?: ISortColumn) {
+  return (target: any, propertyKey: string) => {
+    const optionsList: ISortColumn = {
+      column: propertyKey,
+      ...options,
+    };
+    Reflect.defineMetadata(SK_IS_SORT, optionsList, target, propertyKey);
   };
 }
 

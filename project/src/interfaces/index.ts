@@ -14,9 +14,14 @@ export interface ISelectColumn {
   is_relational?: boolean;
   is_nested?: boolean;
 }
+
+export interface ISortColumn {
+  column?: string;
+  value?: SortDirection;
+}
 export interface IGqlSort {
-  field: number;
-  order: number;
+  field: string;
+  direction: SortDirection;
 }
 
 export interface IGqlPage {
@@ -35,18 +40,18 @@ export interface ISortable {
   asKeyValue(): { [key: string]: string };
 }
 
-export interface IFindAllByPage {
-  repo: Repository<any>;
-  page: IPage;
+export interface IFindAllByPage<T> {
+  repo: Repository<T>;
+  gqlPage?: IGqlPage;
+  sort?: Array<IGqlSort>;
   queryDto?: Object;
   selectDto?: Object;
   customQuery?: IPageSearch[];
 }
 
 export interface IFindOptionByPage {
-  page?: IPage;
   gqlPage?: IGqlPage;
-  sort?: [IGqlSort];
+  sort?: Array<IGqlSort>;
   queryDto?: Object;
   selectDto?: Object;
   customQuery?: IPageSearch[];

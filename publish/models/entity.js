@@ -12,42 +12,60 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.findOne = exports.findOptions = exports.findAllByPage = void 0;
 const typeorm_1 = require("typeorm");
 const constants_1 = require("../constants");
-const page_request_model_1 = require("./page-request.model");
-function findAllByPage({ repo, page, queryDto, selectDto, customQuery, }) {
+function findAllByPage({ repo, queryDto, sort, gqlPage, selectDto, customQuery, }) {
     return __awaiter(this, void 0, void 0, function* () {
         const options = findOptions({
-            page,
             queryDto,
+            sort,
+            gqlPage,
             selectDto,
             customQuery,
         });
         const result = yield repo.findAndCount(options);
-        const elements = result[0];
-        const totalElements = result[1];
-        return _generatePageResult(elements, totalElements, page);
+        const nodes = result[0];
+        const totalCount = result[1];
+        return _generatePageResult(nodes, totalCount, gqlPage);
     });
 }
 exports.findAllByPage = findAllByPage;
-function findOptions({ page, queryDto, selectDto, customQuery, }) {
-    var _a;
-    if (page == undefined &&
+function findOptions({ queryDto, sort, gqlPage, selectDto, customQuery, }) {
+    if (gqlPage == undefined &&
         queryDto == undefined &&
         customQuery == undefined &&
         selectDto == undefined) {
-        throw new Error("One of page|queryDto|selectDto|customQuery must be defined");
+        throw new Error("One of gqlPage|queryDto|selectDto|customQuery must be defined");
     }
-    const pageable = page ? page_request_model_1.PageRequest.from(page) : undefined;
+    let pageable = { skip: undefined, take: undefined };
     let whereCondition = { and: [], or: [] };
-    const sort = (_a = pageable.getSort()) === null || _a === void 0 ? void 0 : _a.asKeyValue();
+    let sortRaw = undefined;
+    if (sort) {
+        sortRaw = {};
+        sort.forEach((e) => {
+            if (e.field.includes(".")) {
+                const list = e.field.split(".");
+                const key = list.shift();
+                sortRaw[key] = _gqlSort(list, e.direction);
+            }
+            else {
+                sortRaw[e.field] = e.direction;
+            }
+        });
+    }
+    if (gqlPage) {
+        pageable = {
+            skip: gqlPage.offset,
+            take: gqlPage.limit,
+        };
+    }
     const { where: whereRaw, relations, select, } = _getMetaQuery(whereCondition, customQuery, queryDto, selectDto);
     select["id"] = true;
     return {
         select,
         where: whereRaw,
-        order: sort,
+        order: sortRaw,
         relations: relations,
-        skip: pageable === null || pageable === void 0 ? void 0 : pageable.getSkip(),
-        take: pageable === null || pageable === void 0 ? void 0 : pageable.getTake(),
+        skip: pageable.skip,
+        take: pageable.take,
     };
 }
 exports.findOptions = findOptions;
@@ -72,11 +90,11 @@ function findOne({ id, repo, queryDto, selectDto, customQuery, }) {
     });
 }
 exports.findOne = findOne;
-function _generatePageResult(elements, totalElements, pageable) {
+function _generatePageResult(nodes, totalCount, pageable) {
     return __awaiter(this, void 0, void 0, function* () {
         return {
-            elements,
-            totalElements,
+            nodes,
+            totalCount,
             pageable,
         };
     });
@@ -200,6 +218,17 @@ function _switchContition(operation, value) {
         default:
             return value;
     }
+}
+function _gqlSort(sort, value) {
+    const key = sort.shift();
+    if (sort.length == 0) {
+        return {
+            [key]: value,
+        };
+    }
+    return {
+        [key]: _gqlSort(sort, value),
+    };
 }
 function isObject(value) {
     return value && typeof value === "object" && !Array.isArray(value);

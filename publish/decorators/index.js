@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GqlFields = exports.SelectColumn = exports.PageSearch = void 0;
+exports.GqlFields = exports.SortColumn = exports.SelectColumn = exports.PageSearch = void 0;
 const constants_1 = require("../constants");
 const common_1 = require("@nestjs/common");
 const graphql_1 = require("@nestjs/graphql");
@@ -18,6 +18,13 @@ function SelectColumn(options) {
     };
 }
 exports.SelectColumn = SelectColumn;
+function SortColumn(options) {
+    return (target, propertyKey) => {
+        const optionsList = Object.assign({ column: propertyKey }, options);
+        Reflect.defineMetadata(constants_1.SK_IS_SORT, optionsList, target, propertyKey);
+    };
+}
+exports.SortColumn = SortColumn;
 exports.GqlFields = (0, common_1.createParamDecorator)((data, ctx) => {
     const gqlCtx = graphql_1.GqlExecutionContext.create(ctx);
     const info = gqlCtx.getInfo();
